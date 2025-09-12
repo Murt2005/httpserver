@@ -85,7 +85,147 @@ std::string toString(HttpStatusCode status_code) {
   }
 }
 
+HttpMethod stringToMethod(const std::string& methodString) {
+  std::string methodStringUppercase;
+  std::transform(methodString.begin(), methodString.end(), std::back_inserter(methodStringUppercase), [](char c) { return toupper(c); });
+  if (methodStringUppercase == "GET") {
+    return HttpMethod::GET;
+  } else if (methodStringUppercase == "HEAD") {
+    return HttpMethod::HEAD;
+  } else if (methodStringUppercase == "POST") {
+    return HttpMethod::POST;
+  } else if (methodStringUppercase == "PUT") {
+    return HttpMethod::PUT;
+  } else if (methodStringUppercase == "DELETE") {
+    return HttpMethod::DELETE;
+  } else if (methodStringUppercase == "CONNECT") {
+    return HttpMethod::CONNECT;
+  } else if (methodStringUppercase == "OPTIONS") {
+    return HttpMethod::OPTIONS;
+  } else if (methodStringUppercase == "TRACE") {
+    return HttpMethod::TRACE;
+  } else if (methodStringUppercase == "PATCH") {
+    return HttpMethod::PATCH;
+  } else {
+    throw std::invalid_argument("Unexpected HTTP method");
+  }
+}
+
+HttpVersion stringToVersion(const std::string& versionString) {
+  std::string versionStringUppercase;
+  std::transform(versionString.begin(), versionString.end(), std::back_inserter(versionStringUppercase), [](char c) { return toupper(c); });
+  if (versionStringUppercase == "HTTP/0.9") {
+    return HttpVersion::HTTP_0_9;
+  } else if (versionStringUppercase == "HTTP/1.0") {
+    return HttpVersion::HTTP_1_0;
+  } else if (versionStringUppercase == "HTTP/1.1") {
+    return HttpVersion::HTTP_1_1;
+  } else if (versionStringUppercase == "HTTP/2" ||
+             versionStringUppercase == "HTTP/2.0") {
+    return HttpVersion::HTTP_2_0;
+  } else {
+    throw std::invalid_argument("Unexpected HTTP version");
+  }
+}
+
+std::string toString(const HttpRequest& request) {
+  std::ostringstream oss;
+
+  oss << toString(request.method()) << ' ';
+  oss << request.uri().path() << ' ';
+  oss << toString(request.version()) << "\r\n";
+
+  for (const auto& p : request.headers()) {
+    oss << p.first << ": " << p.second << "\r\n";
+  }
+
+  oss << "\r\n";
+
+  oss << request.content();
+
+  return oss.str();
+}
+
+std::string toString(const HttpResponse& response, bool sendContent) {
+  std::ostringstream oss;
+
+  oss << toString(response.version()) << ' ';
+  oss << static_cast<int>(response.statusCode()) << ' ';
+  oss << toString(response.statusCode()) << "\r\n";
+
+  for (const auto& p : response.headers()) {
+    oss << p.first << ': ' << p.second << "\r\n";
+  }
+
+  oss << "\r\n";
+
+  if (sendContent) {
+    oss << response.content();
+  }
+
+  return oss.str();
+}
 
 
+HttpRequest stringToRequest(const std::string& requestString) {
+  std::string startLine, headerLines, messageBody;
+  std::istringstream iss;
+  HttpRequest request;
+  std::string line, method, path, version;
+  std::string key, value;
+  Uri uri;
+  size_t lpos = 0, rpos = 0;
+
+  rpos = requestString.find("\r\n", lpos);
+  if (rpos == std::string::npos) {
+    throw std::invalid_argument("Could not find request start line");
+  }
+  startLine = requestString.substr(lpos, rpos - lpos);
+  lpos = rpos + 2;
+
+  rpos = requestString.find("\r\n\r\n", lpos);
+  if (rpos != std::string::npos) {
+    headerLines = requestString.substr(lpos, rpos - lpos);
+    lpos = rpos + 4;
+    rpos = requestString.length();
+    if (lpos < rpos) {
+      messageBody = requestString.substr(lpos, rpos - lpos);
+    }
+  }
+
+  iss.clear();
+  iss.str(startLine);
+  iss >> method >> path >> version;
+  if (!iss.good() && !iss.eof()) {
+    throw std::invalid_argument("Invalid start line format");
+  }
+
+  request.setMethod(stringToMethod(method));
+  request.setUri(Uri(path));
+  if (stringToVersion(version) != request.version()) {
+    throw std::logic_error("HTTP version not supported");
+  }
+
+  iss.clear();
+  iss.str(headerLines);
+  while (std::getline(iss, line)) {
+    std::istringstream headerStream(line);
+    std::getline(headerStream, key, ':');
+    std::getline(headerStream, value);
+
+    key.erase(std::remove_if(key.begin(), key.end(), [](char c) { return std::isspace(c); }), key.end());
+    value.erase(std::remove_if(value.begin(), value.end(), [](char c) { return std::isspace(c); }), value.end());
+    request.setHeader(key, value);
+  }
+
+  request.setContent(messageBody);
+
+  return request;
+}
+
+
+HttpResponse stringToResponse(const std::string& responseString) {
+  throw std::logic_error("Method not implemented");
+}
 
 };

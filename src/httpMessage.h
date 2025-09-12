@@ -182,10 +182,10 @@ private:
     HttpStatusCode statusCode_;
 };
 
-std::string to_string(const HttpRequest& request);
-std::string to_string(const HttpResponse& response, bool send_content = true);
-HttpRequest string_to_request(const std::string& request_string);
-HttpResponse string_to_response(const std::string& response_string);
+std::string toString(const HttpRequest& request);
+std::string toString(const HttpResponse& response, bool sendContent = true);
+HttpRequest stringToRequest(const std::string& requestString);
+HttpResponse stringToResponse(const std::string& responseString);
 
 }
 
