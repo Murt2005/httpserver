@@ -1,3 +1,13 @@
+/**
+ * @file httpMessage.cpp
+ * @brief Implementation of HTTP message serialization and parsing utilities
+ * 
+ * Contains the implementation of all utility functions declared in httpMessage.h
+ * Provides conversion between HTTP objects and strings
+ * Provides serialization and deserialization of HTTP request and response strings
+ * Supports HTTP/1.1
+ */
+
 #include "httpMessage.h"
 
 #include <algorithm>
@@ -10,7 +20,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace httpServer {
+namespace simpleHttpServer {
 
 std::string toString(HttpMethod method) {
   switch (method) {
@@ -166,7 +176,6 @@ std::string toString(const HttpResponse& response, bool sendContent) {
   return oss.str();
 }
 
-
 HttpRequest stringToRequest(const std::string& requestString) {
   std::string startLine, headerLines, messageBody;
   std::istringstream iss;
@@ -223,9 +232,8 @@ HttpRequest stringToRequest(const std::string& requestString) {
   return request;
 }
 
-
+// Function not implemented since server primarily needs to generate responses rather than parse them
 HttpResponse stringToResponse(const std::string& responseString) {
   throw std::logic_error("Method not implemented");
 }
-
 };

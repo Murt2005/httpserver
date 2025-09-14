@@ -1,3 +1,12 @@
+/**
+ * @file httpMessage.h
+ * @brief Defines HTTP message objects and utility functions
+ * 
+ * Provides core data structures and utilities needed to represent, parse, and manipulate HTTP requests and responses
+ * Includes enums for HTTP methods, versions, and status codes
+ * Includes classes that model HTTP messages according to HTTP/1.1 specification
+ */
+
 #ifndef HTTPMESSAGE_H_
 #define HTTPMESSAGE_H_
 
@@ -7,7 +16,7 @@
 
 #include "uri.h"
 
-namespace httpServer {
+namespace simpleHttpServer {
 
 enum class HttpMethod {
     GET,

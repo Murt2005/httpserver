@@ -1,3 +1,11 @@
+/**
+ * @file uri.h
+ * @brief Defines URI (Uniform Resources identifier) class for HTTP request handling
+ * 
+ * Provides a simple URI class that represents and manipulates URIs used in HTTP requests
+ * 
+ */
+
 #ifndef URI_H_
 #define URI_H_
 
@@ -7,7 +15,7 @@
 #include <utility>
 
 
-namespace httpServer {
+namespace simpleHttpServer {
 
 
 class Uri {
