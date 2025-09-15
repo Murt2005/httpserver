@@ -81,13 +81,13 @@ std::string toString(HttpStatusCode statusCode);
 HttpMethod stringToMethod(const std::string& methodString);
 HttpVersion stringToVersion(const std::string& versionString);
 
-class HttpMessageInferace {
+class HttpMessageInterface {
 public:
-    HttpMessageInferace()
+    HttpMessageInterface()
         : version_(HttpVersion::HTTP_1_1)
     { }
 
-    virtual ~HttpMessageInferace() = default;
+    virtual ~HttpMessageInterface() = default;
 
     void setHeader(const std::string& key, const std::string& value) {
         headers_[key] = std::move(value);
@@ -106,7 +106,7 @@ public:
         SetContentLength();
     }
 
-    void clearContent(const std::string& content) {
+    void clearContent([[maybe_unused]] const std::string& content) {
         content_.clear();
         SetContentLength();
     }
@@ -136,7 +136,7 @@ protected:
     }
 };
 
-class HttpRequest : public HttpMessageInferace {
+class HttpRequest : public HttpMessageInterface {
 public:
     HttpRequest()
         : method_(HttpMethod::GET)
@@ -168,10 +168,14 @@ private:
     Uri uri_;
 };
 
-class HttpResponse : public HttpMessageInferace {
+class HttpResponse : public HttpMessageInterface {
 public:
     HttpResponse()
         : statusCode_(HttpStatusCode::Ok)
+    { }
+
+    explicit HttpResponse(HttpStatusCode statusCode)
+        : statusCode_(statusCode)
     { }
 
     ~HttpResponse() = default;

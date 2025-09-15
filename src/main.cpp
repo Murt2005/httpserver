@@ -24,14 +24,14 @@ int main(void) {
     int port = 8080;
     HttpServer server(host, port);
 
-    auto sayHello = [](const HttpRequest& request) -> HttpResponse {
+    auto sayHello = []([[maybe_unused]] const HttpRequest& request) -> HttpResponse {
         HttpResponse response(HttpStatusCode::Ok);
         response.setHeader("Content-Type", "text/plain");
         response.setContent("Hello, world\n");
         return response;
     };
 
-    auto sendHtml = [](const HttpRequest& request) -> HttpResponse {
+    auto sendHtml = []([[maybe_unused]] const HttpRequest& request) -> HttpResponse {
         HttpResponse response(HttpStatusCode::Ok);
         std::string content;
         content += "<!doctype html>\n";
@@ -40,7 +40,7 @@ int main(void) {
         content += "<p>A Paragraph</p>\n\n";
         content += "</body>\n</html>\n";
 
-        response.setHeader("Content-Type", "text/plain");
+        response.setHeader("Content-Type", "text/html");
         response.setContent(content);
         return response;
     };

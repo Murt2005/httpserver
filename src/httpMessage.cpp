@@ -164,7 +164,7 @@ std::string toString(const HttpResponse& response, bool sendContent) {
   oss << toString(response.statusCode()) << "\r\n";
 
   for (const auto& p : response.headers()) {
-    oss << p.first << ': ' << p.second << "\r\n";
+    oss << p.first << ": " << p.second << "\r\n";
   }
 
   oss << "\r\n";
@@ -233,7 +233,7 @@ HttpRequest stringToRequest(const std::string& requestString) {
 }
 
 // Function not implemented since server primarily needs to generate responses rather than parse them
-HttpResponse stringToResponse(const std::string& responseString) {
+HttpResponse stringToResponse([[maybe_unused]] const std::string& responseString) {
   throw std::logic_error("Method not implemented");
 }
-};
+}

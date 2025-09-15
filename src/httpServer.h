@@ -1,9 +1,10 @@
 #ifndef HTTPSERVER_H_
 #define HTTPSERVER_H_
 
-#include <sys/epoll.h>
+#include <sys/event.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <chrono>
 #include <functional>
 #include <map>
@@ -19,7 +20,7 @@ namespace simpleHttpServer {
 
 constexpr size_t kMaxBufferSize = 4096;
 
-// struct contains data for managing socket events in the epoll based event loop
+// struct contains data for managing socket events in the kqueue based event loop
 struct EventData {
     EventData()
         : fd(0)
@@ -39,11 +40,11 @@ using HttpRequestHandler_t = std::function<HttpResponse(const HttpRequest&)>;
 // the httpserver class implements a scalable HTTP server using the following architecture:
 // - 1 main thread which handles user interaction and server lifecycle management
 // - 1 listener thread dedicated to accepting incoming client connections
-// - 5 worker threads which process HTTP requests and send responses using epoll I/O
+// - 5 worker threads which process HTTP requests and send responses using kqueue I/O
 //
-// the server uses Linux epoll for efficient I/O multiplexing, allowing it to handle
+// the server uses macOS kqueue for efficient I/O multiplexing, allowing it to handle
 // thousands of concurrent connections with minimal resource overhead. Each worker thread
-// manages its own epoll instance and processes events independtly
+// manages its own kqueue instance and processes events independently
 class HttpServer {
 public:
     // creates a new HTTP server instance and initializes the socket for the specified
@@ -56,9 +57,9 @@ public:
     // move semantics
     HttpServer() = default; // default constructor
     HttpServer(HttpServer&&) = default; // move constructor
-    HttpServer& operator=(HttpServer&) = default; // move assignment operator
+    HttpServer& operator=(HttpServer&) = delete; // move assignment operator
 
-    // initializes the server socket, sets up epoll instances for worker threads,
+    // initializes the server socket, sets up kqueue instances for worker threads,
     // and starts the listener and worker threads. the server will begin accepting
     // HTTP requests once this method completes successfully
     void Start();
@@ -90,7 +91,7 @@ public:
 private:
     static constexpr int kBacklogSize = 1000; // maximum pending connections in listen queue
     static constexpr int kMaxConnections = 10000; // maximum concurrent connections supported
-    static constexpr int kMaxEvents = 10000; // maximum events per epoll_wait call
+    static constexpr int kMaxEvents = 10000; // maximum events per kevent call
     static constexpr int kThreadPoolSize = 5; // number of worker threads in the pool
 
     std::string host_; // host address the server is bound to
@@ -101,8 +102,8 @@ private:
     std::thread listenerThread_; // thread dedicated to accepting new connections
     std::thread workerThreads_[kThreadPoolSize]; // array of worker threads for request processing
 
-    int workerEpollFD_[kThreadPoolSize]; // epoll file descriptor for each worker thread
-    epoll_event workerEvents_[kThreadPoolSize][kMaxEvents]; // event arrays for epoll_wait results
+    int workerKqueueFD_[kThreadPoolSize]; // kqueue file descriptor for each worker thread
+    struct kevent workerEvents_[kThreadPoolSize][kMaxEvents]; // event arrays for kevent results
 
     std::map<Uri, std::map<HttpMethod, HttpRequestHandler_t>> requestHandlers_; // registered request handlers
 
@@ -113,24 +114,24 @@ private:
     // this method is called during server initilization
     void CreateSocket();
 
-    // creates epoll file descriptors for each worker thread to enable efficient
-    // I/O multiplexing. each worker thread will have its own epoll instance
+    // creates kqueue file descriptors for each worker thread to enable efficient
+    // I/O multiplexing. each worker thread will have its own kqueue instance
     // to monitor socket events
-    void SetUpEpoll();
+    void SetUpKqueue();
 
     // continously accepts incoming client connections and distributes them
     // round-robin to worker threads. this method runs in the dedicated
     // listener thread and handles the initial connection setup
     void Listen();
 
-    // processes epoll events for a specific worker thread. this method runs
-    // continously in each worker thread, handling read/write events on
+    // processes kqueue events for a specific worker thread. this method runs
+    // continuously in each worker thread, handling read/write events on
     // client connections and processing HTTP requests
     void ProcessEvents(int workerId);
 
-    // processes individual epoll events, handling both read (EPOLLIN) and write
-    // (EPOLLOUT) operations. manages partial I/O operations and connection state
-    void HandleEpollEvent(int epollFd, EventData* event, std::uint32_t events);
+    // processes individual kqueue events, handling both read (EVFILT_READ) and write
+    // (EVFILT_WRITE) operations. manages partial I/O operations and connection state
+    void HandleKqueueEvent(int kqueueFd, EventData* event, int filter);
 
     // parses the incoming HTTP request, processes it through registered handlers,
     // and generates the appriopriate HTTP response. handles parsing errors and
@@ -142,9 +143,9 @@ private:
     // error response if no handler is found
     HttpResponse HandleHttpResponse(const HttpRequest& request);
 
-    // wrapper function for epoll_ctl that provides error handling and 
-    // consistent interface for managing epoll events across the server
-    void controlEpollEvent(int epollFd, int op, int fd, std::uint32_t events = 0, void* data = nullptr);
+    // wrapper function for kevent that provides error handling and 
+    // consistent interface for managing kqueue events across the server
+    void controlKqueueEvent(int kqueueFd, int ident, int filter, int flags, int fflags = 0, intptr_t data = 0, void* udata = nullptr);
 };
 
 }
