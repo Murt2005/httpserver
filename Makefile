@@ -74,9 +74,23 @@ test: $(TEST_TARGET)
 
 # Run tests with verbose output
 test-verbose: $(TEST_TARGET)
-	@echo "Running test suite (verbose)..."
+	@echo "🧪 Running test suite (verbose)..."
 	@echo "========================================"
 	./$(TEST_TARGET) || true
+
+# Benchmark the server (requires server to be running)
+benchmark: $(SERVER_TARGET)
+	@echo "🚀 Running server benchmarks..."
+	@echo "Make sure the server is running in another terminal: make run"
+	@echo "========================================"
+	@if curl -s http://localhost:8080 > /dev/null 2>&1; then \
+		echo "✅ Server is running, starting benchmark..."; \
+		./benchmark.sh; \
+	else \
+		echo "❌ Server is not running at http://localhost:8080"; \
+		echo "💡 Start the server with: make run"; \
+		exit 1; \
+	fi
 
 # Clean build artifacts
 clean:
@@ -110,6 +124,7 @@ help:
 	@echo "  run          - Build and run the HTTP server"
 	@echo "  test         - Build and run tests"
 	@echo "  test-verbose - Run tests with verbose output"
+	@echo "  benchmark    - Run performance benchmarks (server must be running)"
 	@echo "  clean        - Remove build artifacts"
 	@echo "  rebuild      - Clean and rebuild everything"
 	@echo "  install      - Install server to /usr/local/bin (requires sudo)"
