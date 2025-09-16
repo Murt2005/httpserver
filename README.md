@@ -9,7 +9,7 @@ A high-performance, multi-threaded HTTP/1.1 server written in C++17, designed fo
 - **HTTP/1.1 Compliant**: Full support for HTTP/1.1 specification
 - **Modern C++**: Built with C++17 features and best practices
 
-## 📋 Supported HTTP Features
+## Supported HTTP Features
 
 ### HTTP Methods
 - GET, HEAD, POST, PUT, DELETE
@@ -90,7 +90,7 @@ make rebuild       # Clean and rebuild everything
 ```
 
 
-## ⚡ Performance Characteristics
+## Performance Characteristics
 
 - **Concurrent Connections**: Supports up to 10,000 concurrent connections
 - **Thread Pool**: 5 worker threads + 1 listener thread
